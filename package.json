@@ -1,0 +1,19 @@
+{
+  "name": "biblioteca",
+  "version": "1.0.0",
+  "description": "Sistema de gerenciamento de biblioteca em Node.js",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "menu": "node menu.js",
+    "test": "echo \"Sem testes configurados\""
+  },
+  "keywords": [
+    "nodejs",
+    "biblioteca",
+    "api-rest",
+    "poo"
+  ],
+  "author": "Gabrielly de Souza",
+  "license": "ISC"
+}

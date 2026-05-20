@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Biblioteca</title>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div class="container">
+
+  <h1> Sistema de Biblioteca</h1>
+
+  <div class="top">
+
+    <div class="info">
+      <p>Total de Livros</p>
+      <h3 id="totalLivros">0</h3>
+    </div>
+
+    <div class="info">
+      <p>Disponíveis</p>
+      <h3 id="livrosDisponiveis">0</h3>
+    </div>
+
+    <div class="info">
+      <p>Emprestados</p>
+      <h3 id="livrosEmprestados">0</h3>
+    </div>
+
+  </div>
+
+  <div class="grid">
+
+    <!-- CADASTRAR LIVRO -->
+    <div class="card">
+
+      <h2>Cadastrar Livro</h2>
+
+      <input
+        type="text"
+        id="titulo"
+        placeholder="Título"
+      />
+
+      <input
+        type="text"
+        id="autor"
+        placeholder="Autor"
+      />
+
+      <input
+        type="text"
+        id="isbn"
+        placeholder="ISBN"
+      />
+
+      <input
+        type="number"
+        id="ano"
+        placeholder="Ano"
+      />
+
+      <button onclick="cadastrarLivro()">
+        Cadastrar Livro
+      </button>
+
+    </div>
+
+    <!-- CADASTRAR USUARIO -->
+    <div class="card">
+
+      <h2>Cadastrar Usuário</h2>
+
+      <input
+        type="text"
+        id="nomeUsuario"
+        placeholder="Nome"
+      />
+
+      <input
+        type="email"
+        id="emailUsuario"
+        placeholder="Email"
+      />
+
+      <button onclick="cadastrarUsuario()">
+        Cadastrar Usuário
+      </button>
+
+    </div>
+
+    <!-- EMPRESTIMO -->
+    <div class="card">
+
+      <h2>Realizar Empréstimo</h2>
+
+      <select id="livroEmprestimo"></select>
+
+      <select id="usuarioEmprestimo"></select>
+
+      <button onclick="realizarEmprestimo()">
+        Emprestar Livro
+      </button>
+
+    </div>
+
+    <!-- DEVOLUCAO -->
+    <div class="card">
+
+      <h2>Registrar Devolução</h2>
+
+      <select id="livroDevolucao"></select>
+
+      <button onclick="realizarDevolucao()">
+        Devolver Livro
+      </button>
+
+    </div>
+
+  </div>
+
+  <!-- LISTA -->
+  <div class="card" style="margin-top:20px;">
+
+    <h2>Acervo</h2>
+
+    <div id="listaLivros" class="list"></div>
+
+  </div>
+
+</div>
+
+<script>
+
+const API =
+  "http://localhost:3000";
+
+// =============================
+// CARREGAR DADOS
+// =============================
+
+async function carregarLivros() {
+
+  const resposta =
+    await fetch(`${API}/livros`);
+
+  const dados =
+    await resposta.json();
+
+  const lista =
+    document.getElementById(
+      "listaLivros"
+    );
+
+  lista.innerHTML = "";
+
+  dados.livros.forEach(livro => {
+
+    lista.innerHTML += `
+      <div class="item">
+
+        <strong>
+          ${livro.titulo}
+        </strong>
+
+        <p>
+          ${livro.autor}
+        </p>
+
+        <p>
+          ISBN:
+          ${livro.isbn}
+        </p>
+
+        <div class="
+          status
+          ${livro.disponivel
+            ? "disponivel"
+            : "emprestado"}
+        ">
+
+          ${livro.disponivel
+            ? "Disponível"
+            : "Emprestado"}
+
+        </div>
+
+      </div>
+    `;
+  });
+
+  atualizarEstatisticas(dados.livros);
+
+  carregarSelects(dados.livros);
+}
+
+// =============================
+// USUARIOS
+// =============================
+
+async function carregarUsuarios() {
+
+  const resposta =
+    await fetch(`${API}/usuarios`);
+
+  const dados =
+    await resposta.json();
+
+  const select =
+    document.getElementById(
+      "usuarioEmprestimo"
+    );
+
+  select.innerHTML = "";
+
+  dados.usuarios.forEach(usuario => {
+
+    select.innerHTML += `
+      <option value="${usuario.id}">
+        ${usuario.nome}
+      </option>
+    `;
+  });
+}
+
+// =============================
+// ESTATISTICAS
+// =============================
+
+function atualizarEstatisticas(
+  livros
+) {
+
+  document.getElementById(
+    "totalLivros"
+  ).innerText =
+    livros.length;
+
+  document.getElementById(
+    "livrosDisponiveis"
+  ).innerText =
+    livros.filter(
+      l => l.disponivel
+    ).length;
+
+  document.getElementById(
+    "livrosEmprestados"
+  ).innerText =
+    livros.filter(
+      l => !l.disponivel
+    ).length;
+}
+
+// =============================
+// SELECTS
+// =============================
+
+function carregarSelects(
+  livros
+) {
+
+  const emprestimo =
+    document.getElementById(
+      "livroEmprestimo"
+    );
+
+  const devolucao =
+    document.getElementById(
+      "livroDevolucao"
+    );
+
+  emprestimo.innerHTML = "";
+  devolucao.innerHTML = "";
+
+  livros.forEach(livro => {
+
+    if (livro.disponivel) {
+
+      emprestimo.innerHTML += `
+        <option value="${livro.id}">
+          ${livro.titulo}
+        </option>
+      `;
+    } else {
+
+      devolucao.innerHTML += `
+        <option value="${livro.id}">
+          ${livro.titulo}
+        </option>
+      `;
+    }
+  });
+}
+
+// =============================
+// CADASTRAR LIVRO
+// =============================
+
+async function cadastrarLivro() {
+
+  const titulo =
+    document.getElementById(
+      "titulo"
+    ).value;
+
+  const autor =
+    document.getElementById(
+      "autor"
+    ).value;
+
+  const isbn =
+    document.getElementById(
+      "isbn"
+    ).value;
+
+  const ano =
+    document.getElementById(
+      "ano"
+    ).value;
+
+  await fetch(`${API}/livros`, {
+
+    method:"POST",
+
+    headers:{
+      "Content-Type":
+      "application/json"
+    },
+
+    body:JSON.stringify({
+      titulo,
+      autor,
+      isbn,
+      ano
+    })
+  });
+
+  carregarLivros();
+}
+
+// =============================
+// CADASTRAR USUARIO
+// =============================
+
+async function cadastrarUsuario() {
+
+  const nome =
+    document.getElementById(
+      "nomeUsuario"
+    ).value;
+
+  const email =
+    document.getElementById(
+      "emailUsuario"
+    ).value;
+
+  await fetch(`${API}/usuarios`, {
+
+    method:"POST",
+
+    headers:{
+      "Content-Type":
+      "application/json"
+    },
+
+    body:JSON.stringify({
+      nome,
+      email
+    })
+  });
+
+  carregarUsuarios();
+}
+
+// =============================
+// EMPRESTIMO
+// =============================
+
+async function realizarEmprestimo() {
+
+  const livroId =
+    document.getElementById(
+      "livroEmprestimo"
+    ).value;
+
+  const usuarioId =
+    document.getElementById(
+      "usuarioEmprestimo"
+    ).value;
+
+  await fetch(
+    `${API}/emprestimos`,
+    {
+
+      method:"POST",
+
+      headers:{
+        "Content-Type":
+        "application/json"
+      },
+
+      body:JSON.stringify({
+        livroId,
+        usuarioId
+      })
+    }
+  );
+
+  carregarLivros();
+}
+
+// =============================
+// DEVOLUCAO
+// =============================
+
+async function realizarDevolucao() {
+
+  const livroId =
+    document.getElementById(
+      "livroDevolucao"
+    ).value;
+
+  await fetch(
+    `${API}/emprestimos/devolucao`,
+    {
+
+      method:"POST",
+
+      headers:{
+        "Content-Type":
+        "application/json"
+      },
+
+      body:JSON.stringify({
+        livroId
+      })
+    }
+  );
+
+  carregarLivros();
+}
+
+// =============================
+// INICIAR
+// =============================
+
+carregarLivros();
+carregarUsuarios();
+
+</script>
+
+</body>
+</html>
